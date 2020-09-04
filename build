@@ -1,0 +1,7 @@
+#! /bin/bash
+
+docker build -t dicom-golem:latest .
+gvmkit-build dicom-golem:latest
+var=$(gvmkit-build dicom-golem:latest --push | tee /dev/tty)
+echo $var | grep -o 'hash link.*' | cut -f3 -d' ' > hash_link
+rm docker*
