@@ -1,5 +1,8 @@
 #! /bin/bash
 
+source ~/.envs/data-golem/bin/activate
+export YAGNA_APPKEY=6aedce461af045b8a69de2189c5e3d51
+
 docker build -t dicom-golem:latest .
 gvmkit-build dicom-golem:latest
 var=$(gvmkit-build dicom-golem:latest --push | tee /dev/tty)
