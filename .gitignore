@@ -2,3 +2,4 @@ hash_link
 *.swp
 /output
 /src/__pycache__
+/data
