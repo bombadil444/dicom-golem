@@ -1,4 +1,12 @@
 #! /bin/bash
 
+exec 3>&1 4>&2
+trap 'exec 2>&4 1>&3' 0 1 2 3
+exec 1>/golem/output/log.out 2>&1
+
+cd /golem/resource
+tar -xzvf /golem/resource/C4.tar.gz --no-same-owner
+
 cd /golem/entrypoints
-python3 search.py
+python3 process_hu.py
+mv python.log /golem/output
