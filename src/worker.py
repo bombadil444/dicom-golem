@@ -3,7 +3,7 @@ import asyncio
 
 
 async def worker(ctx: WorkContext, tasks):
-    ctx.send_file(f"./data/example.csv", "/golem/resource/example.csv")
+    ctx.send_file(f"./data/C4.tar.gz", "/golem/resource/C4.tar.gz")
     async for task in tasks:
         partition = task.data
         ctx.begin()
@@ -17,7 +17,9 @@ async def worker(ctx: WorkContext, tasks):
             },
         )
         ctx.run("/golem/entrypoints/run")
-        ctx.download_file(f"/golem/output/output_{partition}.txt", f"output/{partition}.txt")
+        ctx.download_file(f"/golem/output/log.out", f"output/log.out")
+        ctx.download_file(f"/golem/output/python.log", f"output/python.log")
+        ctx.download_file(f"/golem/output/test2.png", f"output/test2.png")
         yield ctx.commit()
         # TODO: Check if job results are valid
         # and reject by: task.reject_task(msg = 'invalid file')

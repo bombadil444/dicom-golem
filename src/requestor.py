@@ -9,13 +9,14 @@ from config import (
     MAX_WORKERS,
     BUDGET,
     SUBNET,
-    OVERHEAD_MINUTES
+    OVERHEAD_MINUTES,
+    NUM_WORKERS
 )
 
 
 async def main():
     # TODO make this dynamic. Iterator over the indicies in the partitions
-    partitions: range = range(0, 7)
+    partitions: range = range(0, NUM_WORKERS)
 
     # TODO make this dynamic, e.g. depending on the size of files to transfer
     # worst-case time overhead for initialization, e.g. negotiation, file transfer etc.
