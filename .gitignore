@@ -3,3 +3,4 @@ hash_link
 /output
 /src/__pycache__
 /data
+*.log
