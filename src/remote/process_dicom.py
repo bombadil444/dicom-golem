@@ -59,20 +59,22 @@ def process_dicoms():
         gk_clustered_imgs = np.load(output_path / "clusters.npy").astype(np.float64)
     else:
         cluster_array = []
+        if args.short:
+            seg_lung_pixels = seg_lung_pixels[0:5]
         for i, sl in enumerate(seg_lung_pixels):
-            print(f"Processing slice: {i}")
-            cluster_array.append(gk_segment(sl, clusters=clusters))
+            logger.info(f"Processing slice: {i}")
+            cluster_array.append(gk_segment(sl, clusters=args.clusters))
             plt.imshow(np.array(cluster_array)[i], cmap=plt.cm.bone)
-            plt.savefig(output_path / f"cluster_{clusters}k_{i}")
+            plt.savefig(output_path / f"cluster_{args.clusters}k_{i}")
 
         gk_clustered_imgs = np.array(cluster_array)
         np.save(output_path / "clusters.npy", gk_clustered_imgs)
 
     # construct a 3D plot of the slices
-    if not args.remote:
+    if args.draw:
         v, f = make_mesh(gk_clustered_imgs, None)
         logger.info("Drawing 3D image")
-        plt_3d(v, f, output_path)
+        plt_3d(v, f, output_path / "3d_clusters")
 
 
 def load_scan(path):
@@ -138,7 +140,7 @@ def plt_3d(verts, faces, output_path):
     ax.set_ylim(0, 400)
     ax.set_zlim(0, 200)
     ax.set_facecolor((0.7, 0.7, 0.7))
-    # plt.savefig(output_path / "test2")
+    plt.savefig(output_path)
 
 
 def largest_label_volume(im, bg=-1):
@@ -296,7 +298,7 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[logging.FileHandler("python.log"), logging.StreamHandler()],
+        handlers=[logging.StreamHandler()],
     )
     global logger
     logger = logging.getLogger("main")
@@ -315,8 +317,7 @@ if __name__ == "__main__":
         help="Local data path. If not provided then will default to ./data/default/",
     )
     parser.add_argument(
-        "-r",
-        dest="remote",
+        "--remote",
         action="store_true",
         help="Indicates that this is running in remote container mode for golem",
     )
@@ -325,6 +326,16 @@ if __name__ == "__main__":
         "--skip",
         action="store_true",
         help="Skips clustering by using previous clusters.npy file",
+    )
+    parser.add_argument(
+        "--short",
+        action="store_true",
+        help="Short run of first 5 slices",
+    )
+    parser.add_argument(
+        "--draw",
+        action="store_true",
+        help="Specifies whether to draw 3D image at end",
     )
     global args
     args = parser.parse_args()

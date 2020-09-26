@@ -5,8 +5,8 @@ trap 'exec 2>&4 1>&3' 0 1 2 3
 exec 1>/golem/output/log.out 2>&1
 
 cd /golem/resource
-tar -xzvf /golem/resource/C4.tar.gz --no-same-owner
+mkdir dicom
+tar -xzvf /golem/resource/dicom.tar.gz --no-same-owner -C ./dicom --strip-components=2
 
 cd /golem/entrypoints
-python3 process_hu.py
-mv python.log /golem/output
+python3 process_dicom.py -c 2 --remote --short --draw

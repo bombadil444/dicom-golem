@@ -1,5 +1,8 @@
 #! /bin/bash
 
 source ~/.envs/data-golem/bin/activate
+
+# TODO make secret
 export YAGNA_APPKEY=6aedce461af045b8a69de2189c5e3d51
+
 yagna service run --accept-terms
