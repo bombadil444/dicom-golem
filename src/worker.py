@@ -10,12 +10,7 @@ async def worker(ctx: WorkContext, tasks):
         # TODO json currently not used
         ctx.send_json(
             "/golem/work/params.json",
-            {
-                "partition": partition,
-                "column": 0,
-                "step": 5000,
-                "search": "203691",
-            },
+            {"partition": partition, "column": 0, "step": 5000, "search": "203691"},
         )
         ctx.run("/golem/entrypoints/run")
         ctx.download_file(f"/golem/output/log.out", f"output/log.out")

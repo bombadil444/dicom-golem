@@ -1,5 +1,5 @@
 """
-Outputs images or internal structure of lungs for chest CT scans.
+Outputs images of lung internal structure for chest CT scans.
 
 Credits:
     - Franklin Heng: shorturl.at/oxBSY
@@ -328,14 +328,10 @@ if __name__ == "__main__":
         help="Skips clustering by using previous clusters.npy file",
     )
     parser.add_argument(
-        "--short",
-        action="store_true",
-        help="Short run of first 5 slices",
+        "--short", action="store_true", help="Short run of first 5 slices"
     )
     parser.add_argument(
-        "--draw",
-        action="store_true",
-        help="Specifies whether to draw 3D image at end",
+        "--draw", action="store_true", help="Specifies whether to draw 3D image at end"
     )
     global args
     args = parser.parse_args()
