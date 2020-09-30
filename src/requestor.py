@@ -1,7 +1,11 @@
 from yapapi.runner import Engine, Task, vm
 from datetime import timedelta
 import asyncio
-import os
+import math
+import shutil
+import logging
+from time import time
+from pathlib import Path
 from worker import worker
 from config import (
     MIN_MEM_GB,
@@ -10,18 +14,30 @@ from config import (
     BUDGET,
     SUBNET,
     OVERHEAD_MINUTES,
-    NUM_WORKERS,
+    PARTITION_SLICES,
+    DATA_PATH,
 )
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()],
+)
+logger = logging.getLogger("main")
 
 
 async def main():
-    # TODO make this dynamic. Iterator over the indicies in the partitions
-    partitions: range = range(0, NUM_WORKERS)
+    # get number of partitions
+    data_path = Path(DATA_PATH)
+    num_files = len(list(data_path.glob("*")))
+    partitions = math.floor(num_files / PARTITION_SLICES)
+    logger.info(f"{partitions=}")
 
-    # TODO make this dynamic, e.g. depending on the size of files to transfer
-    # worst-case time overhead for initialization, e.g. negotiation, file transfer etc.
+    # calc timeout
     init_overhead: timedelta = timedelta(minutes=OVERHEAD_MINUTES)
+    timeout = init_overhead + timedelta(minutes=partitions * 2)
 
+    # get latest pushed package
     with open("hash_link", "r") as f:
         hash_link = f.read()
 
@@ -31,32 +47,43 @@ async def main():
         min_storage_gib=MIN_STORAGE_GB,
     )
 
+    Path("tmp/").mkdir()
+
+    start_time = time()
+
+    # start worker
     async with Engine(
         package=package,
         max_workers=MAX_WORKERS,
         budget=BUDGET,
-        timeout=init_overhead + timedelta(minutes=len(partitions) * 2),
+        timeout=timeout,
         subnet_tag=SUBNET,
     ) as engine:
         async for progress in engine.map(
-            worker, [Task(data=partition) for partition in partitions]
+            worker, [Task(data=partition) for partition in range(0, partitions)]
         ):
-            print("progress=", progress)
+            logger.info(f"{progress=}")
+
+    logger.info(f"Execution time: {time() - start_time}")
+
+    # TODO create consolidated png
 
 
 if __name__ == "__main__":
     # clear outputs from previous runs
-    folder = "output/"
-    for filename in os.listdir(folder):
-        file_path = os.path.join(folder, filename)
-        if os.path.isfile(file_path) or os.path.islink(file_path):
-            os.unlink(file_path)
+    output_dir = Path("output/")
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    output_dir.mkdir()
 
     loop = asyncio.get_event_loop()
     task = loop.create_task(main())
     try:
         asyncio.get_event_loop().run_until_complete(task)
     except (Exception, KeyboardInterrupt) as e:
-        print(e)
+        logger.error(e)
         task.cancel()
         asyncio.get_event_loop().run_until_complete(asyncio.sleep(0.3))
+    finally:
+        if Path("tmp/").exists():
+            shutil.rmtree(Path("tmp/"))
