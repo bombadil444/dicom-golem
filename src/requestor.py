@@ -1,3 +1,5 @@
+import numpy as np
+from skimage import measure
 from yapapi.runner import Engine, Task, vm
 from datetime import timedelta
 import asyncio
@@ -16,6 +18,7 @@ from config import (
     OVERHEAD_MINUTES,
     PARTITION_SLICES,
     DATA_PATH,
+    OUTPUT_PATH,
 )
 
 logging.basicConfig(
@@ -66,12 +69,46 @@ async def main():
 
     logger.info(f"Execution time: {time() - start_time}")
 
-    # TODO create consolidated png
+    # create consolidated png
+    output_path = Path(OUTPUT_PATH)
+    clusters = []
+    for np_file in sorted(output_path.rglob("*.npy")):
+        cluster = np.load(str(np_file))
+        clusters.append(cluster)
+
+    all_clusters = np.concatenate(clusters)
+
+    v, f = make_mesh(all_clusters, None)
+    logger.info("Drawing 3D image")
+    plt_3d(v, f, output_path / "3d_clusters")
+
+
+def make_mesh(image, threshold=-300, step_size=1):
+    p = image.transpose(2, 1, 0)
+    verts, faces, norm, val = measure.marching_cubes(p, threshold)
+
+
+def plt_3d(verts, faces, output_path):
+    x, y, z = zip(*verts)
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111, projection="3d")
+
+    # Fancy indexing: `verts[faces]` to generate a collection of triangles
+    mesh = Poly3DCollection(verts[faces], alpha=1)
+    face_color = [0.45, 0.45, 0.75]
+    mesh.set_facecolor(face_color)
+    ax.add_collection3d(mesh)
+
+    ax.set_xlim(0, 400)
+    ax.set_ylim(0, 400)
+    ax.set_zlim(0, 200)
+    ax.set_facecolor((0.7, 0.7, 0.7))
+    plt.savefig(output_path)
 
 
 if __name__ == "__main__":
     # clear outputs from previous runs
-    output_dir = Path("output/")
+    output_dir = Path(OUTPUT_PATH)
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir()

@@ -24,7 +24,7 @@ async def worker(ctx: WorkContext, tasks):
         tar_path = f"tmp/dicom_{partition}.tar.gz"
 
         with tarfile.open(tar_path, mode="w:gz") as dicom_tar:
-            for i, dicom_path in enumerate(data_path.rglob("*.dcm")):
+            for i, dicom_path in enumerate(sorted(data_path.rglob("*.dcm"))):
                 if start_index <= i < end_index:
                     dicom_tar.add(str(dicom_path))
 
@@ -35,14 +35,15 @@ async def worker(ctx: WorkContext, tasks):
         ctx.run("/golem/entrypoints/run")
         ctx.download_file(f"/golem/output/log.out", f"output/log_{partition}.out")
 
-        # TODO download .npy file instead of .png
-        ctx.download_file(
-            f"/golem/output/3d_clusters.png", f"output/3d_clusters_{partition}.png"
-        )
+        filepath = f"output/clusters_{partition}.npy"
+        ctx.download_file(f"/golem/output/clusters.npy", filepath)
         yield ctx.commit()
 
-        # TODO: Check if job results are valid
-        # and reject by: task.reject_task(msg = 'invalid file')
-        task.accept_task()
+        # check if job results are valid
+        try:
+            np.load(filepath)
+            task.accept_task()
+        except:
+            task.reject_task(msg="invalid file")
 
     ctx.log("no more partitions to search")

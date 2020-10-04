@@ -70,6 +70,7 @@ def process_dicoms():
         gk_clustered_imgs = np.array(cluster_array)
         np.save(output_path / "clusters.npy", gk_clustered_imgs)
 
+    # TODO remove from remote code
     # construct a 3D plot of the slices
     if args.draw:
         v, f = make_mesh(gk_clustered_imgs, None)
